@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>L4D2 武器数据分析终端 V2.0.2589(BY 千早ですわ)</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-base-rgb: 30, 30, 30;  /* 对应原来的 #1e1e1e */
+            --bg-opacity: 0.85;           /* 默认透明度 85% */
+            
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --accent: #ff4444;
+            --border: rgba(255, 255, 255, 0.1); /* 边框也稍微淡一点 */
+        }
+        /* --- 关键修改：让卡片、表格、上传区都使用这个透明度变量 --- */
+        .stat-card, table, .upload-area {
+            /* 使用 rgba(红, 绿, 蓝, 透明度) */
+            background-color: rgba(var(--card-base-rgb), var(--bg-opacity)) !important;
+            
+            /* 【毛玻璃特效】让背景模糊，这样字才看得清 */
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            
+            border: 1px solid var(--border);
+            transition: background-color 0.1s; /* 调节时顺滑一点 */
+        }
+
+        /* 表格头部的背景也需要透明，稍微黑一点 */
+        th {
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+        
+        /* 鼠标悬停表格行的颜色也改成半透明 */
+        tr:hover {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        /* 滑块控制面板的样式 */
+        .opacity-control {
+            background: rgba(0,0,0,0.6);
+            padding: 10px 15px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            border: 1px solid #444;
+            backdrop-filter: blur(5px);
+        }
+        
+        .opacity-control input[type=range] {
+            cursor: pointer;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            
+            /* --- 背景图片设置开始 --- */
+            
+            /* 1. url这里填图片的路径或网址 */
+            /* 如果是本地图片，就把图片放在html同一个文件夹，填文件名，例如 'bg.jpg' */
+            /* 如果是网络图片，直接填 https://... */
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), /* 这行是黑色遮罩，0.8是透明度 */
+                url('爱音01.jpg'); /* 这里换成你的图片地址 */
+
+            /* 2. 让图片铺满屏幕 */
+            background-size: cover;
+
+            /* 3. 让图片居中 */
+            background-position: center;
+
+            /* 4. 滚动网页时背景不动（视差效果） */
+            background-attachment: fixed;
+
+            /* --- 背景图片设置结束 --- */
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .header-content h1 {
+            margin: 0;
+            font-size: 2rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed #444;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 30px;
+            transition: all 0.3s;
+            cursor: pointer;
+            background: #1a1a1a;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: #252525;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            background-color: var(--accent);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: #2a2a2a;
+            color: var(--accent);
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover { background-color: #333; }
+
+        tr:hover { background-color: #252525; }
+
+        .tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .tag-sniper { background: #4a90e2; color: #fff; }
+        .tag-shotgun { background: #d32f2f; color: #fff; }
+        .tag-rifle { background: #388e3c; color: #fff; }
+        .tag-smg { background: #fbc02d; color: #000; }
+        .tag-pistol { background: #7b1fa2; color: #fff; }
+        .tag-special { background: #e64a19; color: #fff; }
+        
+        .op-stat { color: #ffcc00; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div class="header-content">
+            <h1>L4D2 武器数据分析终端 V2.0.2589(BY 千早ですわ)</h1>
+            <div class="subtitle">支持拖拽或点击上传 .txt 脚本文件自动解析 (注:如果你之前修改M60为可换弹以及具有备弹，那么它的类型不会是Special)</div>
+        </div>
+
+        <div class="opacity-control">
+            <label for="opacitySlider">透明度:</label>
+            <input type="range" id="opacitySlider" min="0.1" max="1" step="0.05" value="0.85">
+            <span id="opacityDisplay">85%</span>
+        </div>
+    </header>
+
+    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <p style="color: #aaa; margin: 0;">点击此处选择文件，或将 weapon_xxx.txt 文件拖拽至此</p>
+        <p style="font-size: 0.8em; color: #666;">支持批量上传多个文件</p>
+        <input type="file" id="fileInput" multiple accept=".txt">
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="count-val">0</div>
+            <div class="stat-label">已加载武器</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="top-dps-val">-</div>
+            <div class="stat-label">最高 DPS</div>
+            <div style="font-size: 0.7em; color:#666;" id="top-dps-name"></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="top-dmg-val">-</div>
+            <div class="stat-label">最高单发伤</div>
+            <div style="font-size: 0.7em; color:#666;" id="top-dmg-name"></div>
+        </div>
+    </div>
+
+    <table id="weaponTable">
+        <thead>
+            <tr>
+                <th onclick="sortTable(0)">武器名称</th>
+                <th onclick="sortTable(1)">类型</th>
+                <th onclick="sortTable(2, 'num')">单发总伤</th>
+                <th onclick="sortTable(3, 'num')">射速 (RPM)</th>
+                <th onclick="sortTable(4, 'num')">弹匣</th>
+                <th onclick="sortTable(5, 'num')">DPS</th>
+                <th onclick="sortTable(6, 'num')">穿透</th>
+                <th onclick="sortTable(7, 'num')">射击扩散</th>
+            </tr>
+        </thead>
+        <tbody>
+            </tbody>
+    </table>
+</div>
+
+<script>
+    let weapons = [];
+
+    // 文件处理逻辑
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+
+    fileInput.addEventListener('change', handleFiles);
+    
+    // 拖拽支持
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ff4444';
+    });
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#444';
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#444';
+        const files = e.dataTransfer.files;
+        processFiles(files);
+    });
+
+    function handleFiles() {
+        processFiles(this.files);
+    }
+
+    function processFiles(files) {
+        // 清空现有数据 (可选，这里设计为追加或刷新，目前是追加逻辑，最好先清空方便重置)
+        weapons = []; 
+        
+        let loadedCount = 0;
+        const totalFiles = files.length;
+
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const weaponData = parseWeaponScript(text, file.name);
+                if (weaponData) {
+                    weapons.push(weaponData);
+                }
+                loadedCount++;
+                if (loadedCount === totalFiles) {
+                    refreshUI();
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    // 核心解析器
+    function parseWeaponScript(text, filename) {
+        // 简单的解析逻辑：提取键值对
+        const getValue = (key) => {
+            const regex = new RegExp(`"${key}"\\s+"([^"]+)"`, "i");
+            const match = text.match(regex);
+            return match ? match[1] : null;
+        };
+
+        const dmg = parseFloat(getValue("Damage")) || 0;
+        const bullets = parseFloat(getValue("Bullets")) || 1;
+        const clip = parseInt(getValue("clip_size")) || 0;
+        const cycleTime = parseFloat(getValue("CycleTime")) || 0.15; // 默认值防止除以0
+        const pen = parseInt(getValue("PenetrationNumLayers")) || 0;
+        const spread = parseFloat(getValue("SpreadPerShot")) || 0;
+        
+        let typeRaw = getValue("WeaponType");
+        let type = "rifle"; // 默认
+        if (typeRaw) type = typeRaw.toLowerCase();
+        if (filename.includes("sniper") || filename.includes("hunting")) type = "sniper";
+        if (filename.includes("shotgun")) type = "shotgun";
+        if (filename.includes("smg") || filename.includes("mp5")) type = "smg";
+        if (filename.includes("pistol") || filename.includes("magnum")) type = "pistol";
+        if (filename.includes("launcher")) type = "special";
+
+        // --- 补丁开始：更精准的名称映射 ---
+        const nameMap = {
+            "weapon_sniper_awp.txt": "AWP (重狙)",
+            "weapon_sniper_scout.txt": "Scout (鸟狙)",
+            "weapon_sniper_military.txt": "Military Sniper (军狙)",
+            "weapon_hunting_rifle.txt": "Hunting Rifle (连狙)",
+            
+            "weapon_rifle.txt": "M16 Rifle",
+            "weapon_rifle_ak47.txt": "AK-47",
+            "weapon_rifle_desert.txt": "SCAR-L (三连)",
+            "weapon_rifle_sg552.txt": "SG552",
+            "weapon_rifle_m60.txt": "M60 Machine Gun",
+            
+            "weapon_smg.txt": "Uzi SMG",
+            "weapon_smg_silenced.txt": "Silenced SMG (消音)",
+            "weapon_smg_mp5.txt": "MP5",
+            
+            "weapon_pumpshotgun.txt": "Pump Shotgun (木喷)",
+            "weapon_shotgun_chrome.txt": "Chrome Shotgun (铁喷)",
+            "weapon_autoshotgun.txt": "Auto Shotgun (一代连喷)",
+            "weapon_shotgun_spas.txt": "SPAS-12 (二代连喷)",
+            
+            "weapon_pistol.txt": "Pistol (小手枪)",
+            "weapon_pistol_magnum.txt": "Magnum (马格南)",
+            
+            "weapon_grenade_launcher.txt": "Grenade Launcher (榴弹)"
+        };
+
+        // 1. 优先使用映射表 (忽略大小写)
+        let name = nameMap[filename.toLowerCase()];
+
+        // 2. 如果映射表里没有，再尝试读取脚本里的 printname
+        if (!name) {
+            let rawName = getValue("printname");
+            // 排除掉类似 #L4D_Weapon_xxx 这种翻译代码
+            if (rawName && !rawName.startsWith("#")) {
+                name = rawName.replace(/_/g, "").trim();
+            }
+        }
+
+        // 3. 实在不行，就用文件名自动生成
+        if (!name) {
+            name = filename.replace(".txt", "").replace("weapon_", "").toUpperCase();
+        }
+        // --- 补丁结束 ---
+
+        return {
+            name: name,
+            type: type,
+            dmg: dmg,
+            bullets: bullets,
+            totalDmg: dmg * bullets,
+            clip: clip,
+            cycle: cycleTime,
+            rpm: Math.round(60 / cycleTime),
+            dps: Math.round((dmg * bullets) / cycleTime),
+            pen: pen,
+            spread: spread
+        };
+    }
+
+    function refreshUI() {
+        // 默认按DPS排序
+        weapons.sort((a, b) => b.dps - a.dps);
+        renderTable();
+        updateStats();
+    }
+
+    function renderTable() {
+        const tbody = document.querySelector("#weaponTable tbody");
+        tbody.innerHTML = "";
+        
+        const maxDps = Math.max(...weapons.map(w => w.dps)) || 1;
+
+        weapons.forEach(w => {
+            const row = document.createElement("tr");
+            const dpsPercent = (w.dps / maxDps) * 100;
+            
+            row.innerHTML = `
+                <td style="font-weight:bold; color: #fff;">${w.name}</td>
+                <td><span class="tag tag-${w.type}">${w.type}</span></td>
+                <td>
+                    ${w.bullets > 1 ? `<span style="font-size:0.8em; color:#888;">${w.dmg}x${w.bullets}=</span>` : ''} 
+                    <span class="${w.totalDmg > 1000 ? 'op-stat' : ''}">${Math.round(w.totalDmg)}</span>
+                </td>
+                <td>${w.rpm}</td>
+                <td>${w.clip}</td>
+                <td>
+                    <div style="width: 50px; height: 4px; background: #333; display: inline-block; vertical-align: middle; margin-right:5px;">
+                        <div style="height:100%; background:var(--accent); width:${dpsPercent}%"></div>
+                    </div>
+                    <span class="${w.dps > 10000 ? 'op-stat' : ''}">${w.dps.toLocaleString()}</span>
+                </td>
+                <td>${w.pen}</td>
+                <td>${w.spread}</td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    function updateStats() {
+        if (weapons.length === 0) return;
+
+        document.getElementById("count-val").innerText = weapons.length;
+
+        const topDps = weapons.reduce((p, c) => p.dps > c.dps ? p : c);
+        document.getElementById("top-dps-val").innerText = topDps.dps.toLocaleString();
+        document.getElementById("top-dps-name").innerText = topDps.name;
+
+        const topDmg = weapons.reduce((p, c) => p.totalDmg > c.totalDmg ? p : c);
+        document.getElementById("top-dmg-val").innerText = Math.round(topDmg.totalDmg).toLocaleString();
+        document.getElementById("top-dmg-name").innerText = topDmg.name;
+    }
+
+    let sortDirection = 1;
+    let lastSortIndex = -1;
+
+    window.sortTable = function(n, type = 'str') {
+        if (lastSortIndex === n) sortDirection *= -1;
+        else sortDirection = (n === 0 || n === 1) ? 1 : -1;
+        
+        lastSortIndex = n;
+
+        weapons.sort((a, b) => {
+            let valA, valB;
+            switch(n) {
+                case 0: valA = a.name; valB = b.name; break;
+                case 1: valA = a.type; valB = b.type; break;
+                case 2: valA = a.totalDmg; valB = b.totalDmg; break;
+                case 3: valA = a.rpm; valB = b.rpm; break;
+                case 4: valA = a.clip; valB = b.clip; break;
+                case 5: valA = a.dps; valB = b.dps; break;
+                case 6: valA = a.pen; valB = b.pen; break;
+                case 7: valA = a.spread; valB = b.spread; break;
+            }
+            if (valA < valB) return -1 * sortDirection;
+            if (valA > valB) return 1 * sortDirection;
+            return 0;
+        });
+        renderTable();
+    }
+// --- 透明度滑块逻辑 ---
+    const slider = document.getElementById('opacitySlider');
+    const display = document.getElementById('opacityDisplay');
+
+    slider.addEventListener('input', function() {
+        const val = this.value;
+        // 实时修改 CSS 变量 --bg-opacity
+        document.documentElement.style.setProperty('--bg-opacity', val);
+        // 更新显示的百分比文字
+        display.innerText = Math.round(val * 100) + '%';
+    });
+</script>
+
+</body>
+</html>

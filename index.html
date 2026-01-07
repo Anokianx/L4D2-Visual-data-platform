@@ -407,6 +407,241 @@
             opacity: 0;   /* 默认透明 */
             transition: opacity 1.5s ease-in-out; /* 这才是真正的淡入淡出 */
         }
+
+        /* --- 1. RGB 动态按钮样式 --- */
+        .rgb-btn-container {
+            position: fixed;
+            top: 35px;
+            right: 440px;
+            z-index: 2000; /* 保证在最上层 */
+        }
+
+       .rgb-btn {
+            position: relative;
+            padding: 10px 20px;
+            color: #fff;
+            background: #000; 
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            
+            /* 【改动点】把发光效果直接写在这里，让它一直亮着 */
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5), 0 0 5px rgba(0, 255, 255, 0.5);
+            transition: 0.3s;
+        }
+
+        /* 核心：RGB 流光边框 (通过旋转背景实现) */
+        .rgb-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300%;  /* 必须比按钮大很多 */
+            height: 300%;
+            /* 这是一个旋转的彩色锥形渐变 */
+            background: conic-gradient(
+                #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000
+            );
+            transform: translate(-50%, -50%);
+            animation: rotateRGB 2s linear infinite; /* 2秒转一圈 */
+            z-index: -2;
+        }
+
+        /* 遮罩：在中间盖一层黑块，只露出边缘 */
+        .rgb-btn::after {
+            content: '';
+            position: absolute;
+            inset: 3px; /* 这里的 3px 就是边框的粗细 */
+            background: #1a1a1a;
+            border-radius: 6px;
+            z-index: -1;
+        }
+
+        .rgb-btn:hover {
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.6); /* 悬停发光 */
+            transform: scale(1.05);
+        }
+
+        @keyframes rotateRGB {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        /* --- 2. 侧边栏样式 (抽屉效果) --- */
+        #help-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px; /* 默认藏在屏幕右边外面 */
+            width: 350px;
+            height: 100%;
+            background: rgba(20, 20, 20, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid var(--accent);
+            z-index: 2001;
+            transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Q弹的滑出效果 */
+            padding: 30px;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+            overflow-y: auto;
+            color: #eee;
+        }
+
+        /* 激活状态：滑出来 */
+        #help-sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin: 0;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .close-btn:hover { color: #fff; transform: rotate(90deg); }
+
+        .help-item { margin-bottom: 25px; }
+        .help-item h3 { color: #fff; font-size: 1.1rem; margin-bottom: 8px; border-left: 3px solid var(--accent); padding-left: 10px;}
+        .help-item p { color: #bbb; font-size: 0.9rem; line-height: 1.6; margin: 0; }
+        .help-code { 
+            background: #000; 
+            padding: 5px; 
+            border-radius: 4px; 
+            color: #0f0; 
+            font-family: monospace; 
+            font-size: 0.8em;
+        }
+
+            /* --- 3. RGB 音乐播放器样式 --- */
+        #music-player {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 300px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            overflow: hidden; /* 遮住溢出的光 */
+            
+            /* 初始状态：稍微透明一点 */
+            opacity: 0.9;
+            transition: opacity 0.3s;
+        }
+
+        #music-player:hover {
+            opacity: 1;
+        }
+
+        /* 核心：RGB 流光边框 (复用旋转逻辑) */
+        #music-player::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200%;  /* 足够大以覆盖长方形 */
+            height: 500%;
+            background: conic-gradient(
+                #ff0000, #ff00ff, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000
+            );
+            transform: translate(-50%, -50%);
+            animation: rotateRGB 4s linear infinite; /* 稍微慢一点，优雅一点 */
+            z-index: -2;
+        }
+
+        /* 遮罩：内部黑底，留出 2px 边框 */
+        #music-player::after {
+            content: '';
+            position: absolute;
+            inset: 2px; 
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 13px;
+            z-index: -1;
+        }
+
+        /* 专辑封面/图标区 */
+        .music-cover {
+            width: 50px;
+            height: 50px;
+            background-color: #333;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            animation: spin 3s linear infinite; /* 播放时转圈 */
+            animation-play-state: paused;       /* 默认暂停 */
+            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+            z-index: 1;
+        }
+        
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 信息与控制区 */
+        .music-info {
+            flex: 1;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            overflow: hidden;
+        }
+
+        .song-title {
+            color: #fff;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-weight: bold;
+        }
+
+        .music-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .ctrl-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.2s;
+            padding: 0;
+        }
+
+        .ctrl-btn:hover { color: var(--accent); transform: scale(1.2); }
     </style>
 </head>
 <body>
@@ -415,15 +650,15 @@
 
 <div id="welcome-overlay">
     <h1 class="welcome-title">WEAPON ANALYZER</h1>
-    <div class="welcome-subtitle">L4D2 武器数据分析终端 V2.0.2589</div>
+    <div class="welcome-subtitle">L4D2 武器数据分析终端 V2.0.2617</div>
     <div class="welcome-subtitle">Made By B站 千早ですわ</div>
     <div class="welcome-subtitle">QQ：827677473</div>
-    <button class="enter-btn" onclick="enterSystem()">进入</button>
+    <button class="enter-btn" onclick="enterSystem()">ENTER</button>
 </div>
 <div class="container">
     <header>
         <div class="header-content">
-            <h1>L4D2 武器数据分析终端 V2.0.2589(BY 千早ですわ)</h1>
+            <h1>L4D2 武器数据分析终端 V2.0.2617(BY 千早ですわ)</h1>
             <div class="subtitle">支持拖拽或点击上传 .txt 脚本文件自动解析 (注:如果你之前修改M60为可换弹以及具有备弹，那么它的类型不会是Special)</div>
         </div>
 
@@ -479,6 +714,68 @@
         <tbody>
             </tbody>
     </table>
+</div>
+<div class="rgb-btn-container">
+    <button class="rgb-btn" onclick="toggleHelp()">
+        <span>⚠ 疑难解答</span>
+    </button>
+</div>
+
+<div id="help-sidebar">
+    <div class="sidebar-header">
+        <h2 class="sidebar-title">TROUBLESHOOTING</h2>
+        <button class="close-btn" onclick="toggleHelp()">×</button>
+    </div>
+
+    <div class="help-content">
+        <div class="help-item">
+            <h3>Q: 怎么找到需要的文件？</h3>
+            <p>A: 启动GCFScape，用它打开游戏目录steamapps\common\Left 4 Dead 2\left4dead2，找到一个名为pak01_dir的文件打开。接着打开里面那个scripts的文件夹就是大部分枪的txt文件了，把它们导出来。M60的txt位于steamapps\common\Left 4 Dead 2\left4dead2_dlc1中。</p>
+        </div>
+
+        <div class="help-item">
+            <h3>Q: 怎么自己修改内容？</h3>
+            <p>A: 用记事本打开导出来的txt，这里我只说大概的几个：VerticalPunch武器后坐力，带有spread的都是扩散相关数据，Damage单发伤害Range最大射程RangeModifier射程衰减Bullets单次开火射出的弹片数量CycleTime射出一发子弹所需的时间（秒），然后你自己按照喜好修改。</p>
+        </div>
+
+        <div class="help-item">
+            <h3>Q: 如何安装修改过的txt?</h3>
+            <p>A: 新建一个文件夹，改名为“root”；在“root”内再新建一个文件夹“scripts”，把修改好的txt文档放进“scripts”里。之后用vpk打包程序打包，重命名为pak01_dir然后复制到steamapps\common\Left 4 Dead 2\left4dead2进行替换。</p>
+        </div>
+        
+        <div class="help-item">
+            <h3>Q: DPS 计算公式是什么?</h3>
+            <p>A: 理论爆发 DPS = (单发伤害 × 弹丸数) ÷ 射击间隔。不考虑换弹时间。</p>
+        </div>
+
+        <div class="help-item">
+            <h3>Q: 看不懂解答?</h3>
+            <p>A: 加我QQ827677473，我一步步教你。</p>
+        </div>
+        
+        <div style="margin-top: 50px; text-align: center; color: #666; font-size: 0.8rem;">
+            SYSTEM VER 2.0.2617<br>
+            2026/1/7
+        </div>
+    </div>
+</div>
+<div id="music-player">
+    <div class="music-cover" id="musicCover">🎵</div>
+    
+    <div class="music-info">
+        <div class="song-title" id="songTitle">NO MUSIC LOADED</div>
+        
+        <div class="music-controls">
+            <button class="ctrl-btn" onclick="prevSong()">⏮</button>
+            <button class="ctrl-btn" id="playBtn" onclick="togglePlay()">▶</button>
+            <button class="ctrl-btn" onclick="nextSong()">⏭</button>
+            
+            <input type="range" id="volSlider" min="0" max="1" step="0.1" value="0.5" 
+                   style="width: 60px; height: 3px; accent-color: var(--accent);">
+        </div>
+    </div>
+    
+    <audio id="audioPlayer"></audio>
 </div>
 
 <script>
@@ -552,6 +849,101 @@
             overlay.classList.add('hidden-overlay');
         }
     }
+
+        // --- 侧边栏开关逻辑 ---
+    function toggleHelp() {
+        const sidebar = document.getElementById('help-sidebar');
+        // 切换 'open' 类，CSS 会自动处理滑入滑出动画
+        sidebar.classList.toggle('open');
+    }
+
+    // --- 音乐播放器逻辑 ---
+    // 1. 在这里配置你的歌单 (文件名必须带后缀，例如 "music.mp3")
+    const playlist = [
+        { title: "MyGO!!!!! - 春日影", file: "春日影.mp3" },
+        { title: "ninelie", file: "ninelie.mp3" },
+        { title: "MyGO!!!!! - 猛毒侵袭", file: "猛毒侵袭.mp3" },
+        { title: "MyGO!!!!! - 迷星叫", file: "迷星叫.mp3" },
+        { title: "MyGO!!!!! - 名无声", file: "名无声.mp3" },
+        { title: "打上花火", file: "打上花火.mp3" },
+        { title: "MyGO!!!!! - 诗超绊", file: "诗超绊.mp3" },
+        { title: "蓝悼花", file: "蓝悼花.mp3" },
+        { title: "Avid", file: "Avid.mp3" },
+        { title: "AveMujica - 天空的乐章", file: "天空的乐章.mp3" },
+        // 如果你没有文件，它会显示 placeholder
+    ];
+
+    let currentSongIndex = 0;
+    const audioPlayer = document.getElementById('audioPlayer');
+    const playBtn = document.getElementById('playBtn');
+    const songTitle = document.getElementById('songTitle');
+    const musicCover = document.getElementById('musicCover');
+    const volSlider = document.getElementById('volSlider');
+
+    // 初始化
+    if(playlist.length > 0) {
+        loadSong(0);
+    }
+
+    function loadSong(index) {
+        if(playlist.length === 0) return;
+        currentSongIndex = index;
+        songTitle.innerText = playlist[index].title;
+        // 如果你有文件，这里把 src 指向文件
+        // audioPlayer.src = playlist[index].file; 
+        
+        // 为了防止报错，这里检查一下文件是否存在 (模拟)
+        if(playlist[index].file) {
+             audioPlayer.src = playlist[index].file;
+        }
+    }
+
+    function togglePlay() {
+        if(playlist.length === 0) {
+            alert("请先在代码的 playlist 数组中添加 mp3 文件名！");
+            return;
+        }
+
+        if (audioPlayer.paused) {
+            audioPlayer.play().catch(e => console.log("请先与页面交互才能播放音乐"));
+            playBtn.innerText = "⏸"; // 变成暂停图标
+            musicCover.style.animationPlayState = "running"; // 封面开始转
+            // 封面变色，增加动感
+            musicCover.style.backgroundColor = "var(--accent)";
+            musicCover.style.color = "#000";
+        } else {
+            audioPlayer.pause();
+            playBtn.innerText = "▶"; // 变成播放图标
+            musicCover.style.animationPlayState = "paused"; // 封面停止转
+            musicCover.style.backgroundColor = "#333";
+            musicCover.style.color = "#fff";
+        }
+    }
+
+    function nextSong() {
+        currentSongIndex = (currentSongIndex + 1) % playlist.length;
+        loadSong(currentSongIndex);
+        // 切换后自动播放
+        if(!audioPlayer.paused || playBtn.innerText === "⏸") { 
+            audioPlayer.play(); 
+        }
+    }
+
+    function prevSong() {
+        currentSongIndex = (currentSongIndex - 1 + playlist.length) % playlist.length;
+        loadSong(currentSongIndex);
+        if(!audioPlayer.paused || playBtn.innerText === "⏸") { 
+            audioPlayer.play(); 
+        }
+    }
+
+    // 音量控制
+    volSlider.addEventListener('input', (e) => {
+        audioPlayer.volume = e.target.value;
+    });
+
+    // 自动切歌
+    audioPlayer.addEventListener('ended', nextSong);
 
     let weapons = [];
 
@@ -680,7 +1072,7 @@
             "weapon_sniper_awp.txt": "AWP (重狙)",
             "weapon_sniper_scout.txt": "Scout (鸟狙)",
             "weapon_sniper_military.txt": "Military Sniper (军狙)",
-            "weapon_hunting_rifle.txt": "Hunting Rifle (连狙)",
+            "weapon_hunting_rifle.txt": "Hunting Rifle (木狙)",
             "weapon_rifle.txt": "M16 Rifle",
             "weapon_rifle_ak47.txt": "AK-47",
             "weapon_rifle_desert.txt": "SCAR-L (三连)",

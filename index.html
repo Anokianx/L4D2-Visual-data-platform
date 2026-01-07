@@ -7,11 +7,11 @@
         :root {
             --bg-color: #121212;
             --card-base-rgb: 30, 30, 30;  /* 对应原来的 #1e1e1e */
-            --bg-opacity: 0.85;           /* 默认透明度 85% */
+            --bg-opacity: 0.80;           /* 默认透明度 85% */
             
             --text-main: #e0e0e0;
             --text-muted: #a0a0a0;
-            --accent: #ff4444;
+            --accent: #FFC0CB;
             --border: rgba(255, 255, 255, 0.1); /* 边框也稍微淡一点 */
         }
         /* --- 关键修改：让卡片、表格、上传区都使用这个透明度变量 --- */
@@ -50,8 +50,120 @@
             backdrop-filter: blur(5px);
         }
         
-        .opacity-control input[type=range] {
+        /* --- 滑块容器：用于固定三个层的位置 --- */
+        .slider-container {
+            position: relative;
+            flex: 1;            /* 自动填满剩余空间 */
+            min-width: 200px;
+            height: 50px;       /* 高度必须能容纳下头像 */
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+
+        /* --- 1. 灰色底轨 --- */
+        .slider-track {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 95%;
+            height: 9px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            transform: translateY(-50%); /* 垂直居中 */
+            z-index: 0;
+        }
+
+        /* --- 2. 粉色进度条 --- */
+        .slider-fill {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            height: 9px;
+            background-color: var(--accent); /* 粉色 */
+            border-radius: 4px;
+            transform: translateY(-50%);
+            z-index: 1;
+            width: 0%; /* 初始宽度，由 JS 修改 */
+            pointer-events: none; /* 让鼠标点击穿透它，直接点到 input 上 */
+        }
+
+        /* --- 3. 交互滑块 (本体) --- */
+        .slider-container input[type=range] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            opacity: 1; 
+            -webkit-appearance: none; /* 清除默认样式 */
+            appearance: none;
+            background: transparent;  /* 关键：轨道透明！ */
+            z-index: 2;               /* 放在最顶层接收点击 */
             cursor: pointer;
+        }
+
+        /* 除去点击时的蓝框 */
+        .slider-container input[type=range]:focus {
+            outline: none;
+        }
+
+        /* --- 滑块图标 (爱音) --- */
+        .slider-container input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 48px;
+            height: 48px;
+            
+            background-image: url('037_live_event_250_r.png');
+            background-size: 130%;
+            background-repeat: no-repeat;
+            background-position: center;
+            
+            border: none;
+            filter: drop-shadow(0 0 4px var(--accent));
+            
+            /* 1. 初始状态：稍微大一点点 (1.1倍) */
+            transform: scale(1.1);
+            
+            /* 2. 动画过渡：加了贝塞尔曲线，会有 Q 弹的效果 */
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            
+            margin-top: 0px; 
+            cursor: pointer; /* 鼠标放上去变小手 */
+        }
+
+        /* --- 新增特效：鼠标悬停时放大 --- */
+        .slider-container input[type=range]:hover::-webkit-slider-thumb {
+            transform: scale(1.25); /* 放大到 1.25 倍 */
+            filter: drop-shadow(0 0 8px var(--accent)); /* 发光更强 */
+        }
+
+        /* --- 新增特效：鼠标按住时变得更大 --- */
+        .slider-container input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.4); /* 放大到 1.4 倍 */
+            filter: drop-shadow(0 0 12px var(--accent)); /* 光晕爆满 */
+        }
+
+        /* Firefox 兼容代码 (如果有需要) */
+        .slider-container input[type=range]::-moz-range-thumb {
+            width: 48px;
+            height: 48px;
+            background: transparent;
+            border: none;
+            background-image: url('037_live_event_250_r.png');
+            background-size: 100%;
+            background-position: center;
+            filter: drop-shadow(0 0 4px var(--accent));
+            transform: scale(1.1);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .slider-container input[type=range]:hover::-moz-range-thumb {
+            transform: scale(1.25);
+        }
+        .slider-container input[type=range]:active::-moz-range-thumb {
+            transform: scale(1.4);
         }
 
         body {
@@ -59,26 +171,7 @@
             color: var(--text-main);
             margin: 0;
             padding: 20px;
-            
-            /* --- 背景图片设置开始 --- */
-            
-            /* 1. url这里填图片的路径或网址 */
-            /* 如果是本地图片，就把图片放在html同一个文件夹，填文件名，例如 'bg.jpg' */
-            /* 如果是网络图片，直接填 https://... */
-            background-image: 
-                linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), /* 这行是黑色遮罩，0.8是透明度 */
-                url('爱音01.jpg'); /* 这里换成你的图片地址 */
-
-            /* 2. 让图片铺满屏幕 */
-            background-size: cover;
-
-            /* 3. 让图片居中 */
-            background-position: center;
-
-            /* 4. 滚动网页时背景不动（视差效果） */
-            background-attachment: fixed;
-
-            /* --- 背景图片设置结束 --- */
+            /* 注意：这里的背景设置都移到 .bg-layer 里去了 */
         }
 
         .container {
@@ -211,10 +304,122 @@
         .tag-special { background: #e64a19; color: #fff; }
         
         .op-stat { color: #ffcc00; font-weight: bold; }
+            /* --- 新增：背景轮播过渡动画 --- */
+        body {
+            /* 给背景图片的变化加一个过渡，这样切换时不会闪瞎眼 */
+            transition: background-image 1s ease-in-out;
+        }
+
+        /* --- 新增：欢迎界面样式 --- */
+        #welcome-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(18, 18, 18, 0.95); /* 深色背景，略微透一点 */
+            backdrop-filter: blur(15px);
+            z-index: 9999; /* 保证在最上层 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        /* 欢迎界面的标题 */
+        .welcome-title {
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: 0 0 10px var(--accent);
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+            animation: fadeInDown 1s ease-out 0.2s backwards;
+        }
+
+        /* 进入按钮 */
+        .enter-btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--accent);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            animation: fadeInUp 1s ease-out 0.4s backwards;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .enter-btn:hover {
+            background: var(--accent);
+            box-shadow: 0 0 20px var(--accent);
+            transform: scale(1.05);
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* 简单的进场动画 */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 当欢迎界面隐藏时 */
+        .hidden-overlay {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        /* --- 新增：双层背景样式 --- */
+        .bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            /* 依然保留那层黑色遮罩 */
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)); 
+            z-index: -10; /* 放在最底层 */
+        }
+
+        #bg-back {
+            z-index: -10; /* 后层 */
+        }
+
+        #bg-front {
+            z-index: -9;  /* 前层 (在后层上面) */
+            opacity: 0;   /* 默认透明 */
+            transition: opacity 1.5s ease-in-out; /* 这才是真正的淡入淡出 */
+        }
     </style>
 </head>
 <body>
+    <div id="bg-back" class="bg-layer"></div>
+    <div id="bg-front" class="bg-layer"></div>
 
+<div id="welcome-overlay">
+    <h1 class="welcome-title">WEAPON ANALYZER</h1>
+    <div class="welcome-subtitle">L4D2 武器数据分析终端 V2.0.2589</div>
+    <div class="welcome-subtitle">Made By B站 千早ですわ</div>
+    <div class="welcome-subtitle">QQ：827677473</div>
+    <button class="enter-btn" onclick="enterSystem()">进入</button>
+</div>
 <div class="container">
     <header>
         <div class="header-content">
@@ -224,7 +429,13 @@
 
         <div class="opacity-control">
             <label for="opacitySlider">透明度:</label>
-            <input type="range" id="opacitySlider" min="0.1" max="1" step="0.05" value="0.85">
+            
+            <div class="slider-container">
+                <div class="slider-track"></div>
+                <div class="slider-fill" id="sliderFill"></div>
+                <input type="range" id="opacitySlider" min="0.01" max="1" step="0.01" value="0.85">
+            </div>
+
             <span id="opacityDisplay">85%</span>
         </div>
     </header>
@@ -271,18 +482,137 @@
 </div>
 
 <script>
+    // --- 配置区域 ---
+    const bgImages = [
+        "爱音01.jpg", 
+        "爱音02.jpg",
+        "爱音03.jpg",
+        "爱音04.jpg" 
+    ];
+    
+    let currentBgIndex = 0;
+
+    // --- 初始化背景 ---
+    // 网页一打开，先给“底层”设置第一张图
+    window.onload = function() {
+        const bgBack = document.getElementById('bg-back');
+        if(bgBack && bgImages.length > 0) {
+            // 注意：这里要加上你的渐变遮罩
+            bgBack.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('${bgImages[0]}')`;
+        }
+        
+        // 开始轮播
+        if (bgImages.length > 1) {
+            setInterval(changeBackground, 6000); 
+        }
+    };
+
+    function changeBackground() {
+        const bgBack = document.getElementById('bg-back');
+        const bgFront = document.getElementById('bg-front');
+        
+        // 1. 计算下一张图
+        const nextIndex = (currentBgIndex + 1) % bgImages.length;
+        const nextImgUrl = bgImages[nextIndex];
+
+        // 2. 预加载图片
+        const loader = new Image();
+        loader.src = nextImgUrl;
+
+        loader.onload = function() {
+            // 3. 把新图设置给“前层” (bg-front)
+            bgFront.style.backgroundImage = `
+                linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                url('${nextImgUrl}')
+            `;
+
+            // 4. 让前层淡入 (opacity 0 -> 1)
+            bgFront.style.opacity = 1;
+
+            // 5. 等待 1.5秒 动画结束
+            setTimeout(() => {
+                // 把“后层”也变成新图 (这一步用户看不见，因为被前层挡住了)
+                bgBack.style.backgroundImage = `
+                    linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)),
+                    url('${nextImgUrl}')
+                `;
+                
+                // 瞬间把“前层”变回透明，为下一次做准备
+                // 因为此时后层和前层图片一样，所以变透明也不会闪烁
+                bgFront.style.opacity = 0;
+                
+                currentBgIndex = nextIndex;
+            }, 1500); // 这个时间必须和 CSS 里的 transition 时间一致
+        };
+    }
+
+    function enterSystem() {
+        const overlay = document.getElementById('welcome-overlay');
+        if (overlay) {
+            overlay.classList.add('hidden-overlay');
+        }
+    }
+
     let weapons = [];
 
-    // 文件处理逻辑
+    // --- 1. 预先初始化变量 ---
     const fileInput = document.getElementById('fileInput');
     const dropZone = document.getElementById('dropZone');
 
+    // --- 透明度滑块逻辑 ---
+    const slider = document.getElementById('opacitySlider');
+    const display = document.getElementById('opacityDisplay');
+    const sliderFill = document.getElementById('sliderFill'); // 获取粉色条元素
+
+    function updateSlider(val) {
+        // 1. 设置网页透明度
+        document.documentElement.style.setProperty('--bg-opacity', val);
+        
+        // 2. 更新文字
+        if(display) display.innerText = Math.round(val * 100) + '%';
+        
+        // --- 3. 计算粉色条的宽度 ---
+        if (!slider || !sliderFill) return;
+
+        const min = parseFloat(slider.min);
+        const max = parseFloat(slider.max);
+        const ratio = (val - min) / (max - min);
+        
+        // 获取实际宽度
+        const trackWidth = slider.offsetWidth;
+        const thumbWidth = 48; // 必须和 CSS 里的图标宽度一致！
+        
+        // 【核心公式】
+        // 浏览器会让图标在 (0) 到 (trackWidth - thumbWidth) 之间移动
+        // 我们计算图标【中心点】在哪
+        const thumbCenterPosition = (trackWidth - thumbWidth) * ratio + (thumbWidth / 2);
+        
+        // 让粉色条的宽度直接等于这个中心点位置
+        // 还可以减去 2px 让它稍微缩进图标里一点，利用图标的光晕遮挡接口
+        sliderFill.style.width = (thumbCenterPosition - 2) + 'px';
+    }
+
+    if(slider && display) {
+        // 初始化
+        updateSlider(slider.value);
+
+        // 拖动监听
+        slider.addEventListener('input', function() {
+            updateSlider(this.value);
+        });
+        
+        // 窗口大小改变时，重新计算宽度
+        window.addEventListener('resize', () => {
+            updateSlider(slider.value);
+        });
+    }
+
+    // --- 3. 文件处理逻辑 ---
     fileInput.addEventListener('change', handleFiles);
     
-    // 拖拽支持
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
-        dropZone.style.borderColor = '#ff4444';
+        dropZone.style.borderColor = '#ff4444'; // 也可以改成 var(--accent)
     });
     dropZone.addEventListener('dragleave', (e) => {
         e.preventDefault();
@@ -300,9 +630,7 @@
     }
 
     function processFiles(files) {
-        // 清空现有数据 (可选，这里设计为追加或刷新，目前是追加逻辑，最好先清空方便重置)
-        weapons = []; 
-        
+        weapons = []; // 清空重置
         let loadedCount = 0;
         const totalFiles = files.length;
 
@@ -323,9 +651,8 @@
         });
     }
 
-    // 核心解析器
+    // --- 4. 核心解析器 ---
     function parseWeaponScript(text, filename) {
-        // 简单的解析逻辑：提取键值对
         const getValue = (key) => {
             const regex = new RegExp(`"${key}"\\s+"([^"]+)"`, "i");
             const match = text.match(regex);
@@ -335,12 +662,12 @@
         const dmg = parseFloat(getValue("Damage")) || 0;
         const bullets = parseFloat(getValue("Bullets")) || 1;
         const clip = parseInt(getValue("clip_size")) || 0;
-        const cycleTime = parseFloat(getValue("CycleTime")) || 0.15; // 默认值防止除以0
+        const cycleTime = parseFloat(getValue("CycleTime")) || 0.15;
         const pen = parseInt(getValue("PenetrationNumLayers")) || 0;
         const spread = parseFloat(getValue("SpreadPerShot")) || 0;
         
         let typeRaw = getValue("WeaponType");
-        let type = "rifle"; // 默认
+        let type = "rifle";
         if (typeRaw) type = typeRaw.toLowerCase();
         if (filename.includes("sniper") || filename.includes("hunting")) type = "sniper";
         if (filename.includes("shotgun")) type = "shotgun";
@@ -348,51 +675,39 @@
         if (filename.includes("pistol") || filename.includes("magnum")) type = "pistol";
         if (filename.includes("launcher")) type = "special";
 
-        // --- 补丁开始：更精准的名称映射 ---
+        // 名称映射
         const nameMap = {
             "weapon_sniper_awp.txt": "AWP (重狙)",
             "weapon_sniper_scout.txt": "Scout (鸟狙)",
             "weapon_sniper_military.txt": "Military Sniper (军狙)",
             "weapon_hunting_rifle.txt": "Hunting Rifle (连狙)",
-            
             "weapon_rifle.txt": "M16 Rifle",
             "weapon_rifle_ak47.txt": "AK-47",
             "weapon_rifle_desert.txt": "SCAR-L (三连)",
             "weapon_rifle_sg552.txt": "SG552",
             "weapon_rifle_m60.txt": "M60 Machine Gun",
-            
             "weapon_smg.txt": "Uzi SMG",
             "weapon_smg_silenced.txt": "Silenced SMG (消音)",
             "weapon_smg_mp5.txt": "MP5",
-            
             "weapon_pumpshotgun.txt": "Pump Shotgun (木喷)",
             "weapon_shotgun_chrome.txt": "Chrome Shotgun (铁喷)",
             "weapon_autoshotgun.txt": "Auto Shotgun (一代连喷)",
             "weapon_shotgun_spas.txt": "SPAS-12 (二代连喷)",
-            
             "weapon_pistol.txt": "Pistol (小手枪)",
             "weapon_pistol_magnum.txt": "Magnum (马格南)",
-            
             "weapon_grenade_launcher.txt": "Grenade Launcher (榴弹)"
         };
 
-        // 1. 优先使用映射表 (忽略大小写)
         let name = nameMap[filename.toLowerCase()];
-
-        // 2. 如果映射表里没有，再尝试读取脚本里的 printname
         if (!name) {
             let rawName = getValue("printname");
-            // 排除掉类似 #L4D_Weapon_xxx 这种翻译代码
             if (rawName && !rawName.startsWith("#")) {
                 name = rawName.replace(/_/g, "").trim();
             }
         }
-
-        // 3. 实在不行，就用文件名自动生成
         if (!name) {
             name = filename.replace(".txt", "").replace("weapon_", "").toUpperCase();
         }
-        // --- 补丁结束 ---
 
         return {
             name: name,
@@ -409,8 +724,8 @@
         };
     }
 
+    // --- 5. UI 刷新与排序 ---
     function refreshUI() {
-        // 默认按DPS排序
         weapons.sort((a, b) => b.dps - a.dps);
         renderTable();
         updateStats();
@@ -450,13 +765,10 @@
 
     function updateStats() {
         if (weapons.length === 0) return;
-
         document.getElementById("count-val").innerText = weapons.length;
-
         const topDps = weapons.reduce((p, c) => p.dps > c.dps ? p : c);
         document.getElementById("top-dps-val").innerText = topDps.dps.toLocaleString();
         document.getElementById("top-dps-name").innerText = topDps.name;
-
         const topDmg = weapons.reduce((p, c) => p.totalDmg > c.totalDmg ? p : c);
         document.getElementById("top-dmg-val").innerText = Math.round(topDmg.totalDmg).toLocaleString();
         document.getElementById("top-dmg-name").innerText = topDmg.name;
@@ -465,7 +777,7 @@
     let sortDirection = 1;
     let lastSortIndex = -1;
 
-    window.sortTable = function(n, type = 'str') {
+    window.sortTable = function(n) {
         if (lastSortIndex === n) sortDirection *= -1;
         else sortDirection = (n === 0 || n === 1) ? 1 : -1;
         
@@ -489,17 +801,6 @@
         });
         renderTable();
     }
-// --- 透明度滑块逻辑 ---
-    const slider = document.getElementById('opacitySlider');
-    const display = document.getElementById('opacityDisplay');
-
-    slider.addEventListener('input', function() {
-        const val = this.value;
-        // 实时修改 CSS 变量 --bg-opacity
-        document.documentElement.style.setProperty('--bg-opacity', val);
-        // 更新显示的百分比文字
-        display.innerText = Math.round(val * 100) + '%';
-    });
 </script>
 
 </body>
